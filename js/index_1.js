@@ -1,78 +1,37 @@
-const nav = document.getElementById('tb-nav'); 
+const nav = document.getElementById('tb-nav');
 const hamburger = document.getElementById('tb-hamburger');
 const modal = document.querySelector('.modal');
 const backdrop = document.querySelector('.modal-backdrop');
 const closeBtn = document.querySelector('.modal-close');
 const imgModal = document.getElementById('imgModal');
 const vidModal = document.getElementById('vidModal');
-const ytModal  = document.getElementById('ytModal'); // NEW
+
+const urlParams = new URLSearchParams(window.location.search);
+const urlMode = urlParams.get("mode");
+
+if (urlMode === "view") {
+    document.getElementById('topbar').remove();
+    document.getElementById('footer').remove();
+}
 
 function isVideoSrc(src) {
     return /\.(mp4|webm|ogg)(\?.*)?$/i.test(src || '');
 }
 
-function isYoutube(src) {
-    return /(youtube\.com|youtu\.be)/i.test(src || '');
-}
-
-function getYouTubeId(url) {
-    try {
-        const u = new URL(url);
-        if (u.hostname.includes('youtu.be')) {
-            return u.pathname.slice(1);
-        }
-        if (u.searchParams.has('v')) {
-            return u.searchParams.get('v');
-        }
-        const parts = u.pathname.split('/').filter(Boolean);
-        const i = parts.findIndex(p => p === 'embed' || p === 'shorts' || p === 'live');
-        if (i !== -1 && parts[i + 1]) return parts[i + 1];
-        return parts.pop() || null;
-    } catch {
-        return null;
-    }
-}
-
-function youTubeEmbedUrl(id) {
-    return `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`;
-}
-
-function youTubeThumbUrl(id) {
-    return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-}
-
 function setMediaPreview(src) {
-    const isVid = isVideoSrc(src);
-    const isYT  = isYoutube(src);
-
+    const video = isVideoSrc(src);
     imgModal.classList.remove('show');
     vidModal.classList.remove('show');
-    ytModal.classList.remove('show');
-
-    if (isYT) {
-        const id = getYouTubeId(src);
-        if (id) {
-            ytModal.src = youTubeEmbedUrl(id);
-            ytModal.classList.add('show');
-        }
-        vidModal.pause();
-        imgModal.removeAttribute('src');
-        vidModal.removeAttribute('src');
-        return;
-    }
-
-    if (isVid) {
+    if (video) {
         vidModal.src = src;
         vidModal.currentTime = 0;
         vidModal.classList.add('show');
         imgModal.removeAttribute('src');
-        ytModal.removeAttribute('src');
     } else {
         imgModal.src = src;
         imgModal.classList.add('show');
         vidModal.pause();
         vidModal.removeAttribute('src');
-        ytModal.removeAttribute('src');
     }
 }
 
@@ -89,7 +48,6 @@ function closeModal() {
     vidModal.pause();
     imgModal.removeAttribute('src');
     vidModal.removeAttribute('src');
-    ytModal.removeAttribute('src');
 }
 
 function createVideoThumb(src) {
@@ -130,28 +88,7 @@ function hydrateMediaButtons() {
             const src = btn.getAttribute('data-src');
             if (!src) return;
             if (btn.querySelector('img')) return;
-
-            if (isYoutube(src)) {
-                try {
-                    const id = getYouTubeId(src);
-                    const thumb = id ? youTubeThumbUrl(id) : '';
-                    const img = new Image();
-                    img.loading = 'lazy';
-                    img.decoding = 'async';
-                    img.alt = '';
-                    img.src = thumb || '';
-                    btn.appendChild(img);
-                    const badge = document.createElement('span');
-                    badge.className = 'media-badge';
-                    badge.textContent = 'YouTube';
-                    btn.appendChild(badge);
-                } catch {
-                    const badge = document.createElement('span');
-                    badge.className = 'media-badge';
-                    badge.textContent = 'YouTube';
-                    btn.appendChild(badge);
-                }
-            } else if (isVideoSrc(src)) {
+            if (isVideoSrc(src)) {
                 try {
                     const dataUrl = await createVideoThumb(src);
                     const img = new Image();
@@ -187,21 +124,7 @@ function hydrateMediaButtons() {
         else {
             const src = btn.getAttribute('data-src');
             if (!src) return;
-
-            if (isYoutube(src)) {
-                const id = getYouTubeId(src);
-                const thumb = id ? youTubeThumbUrl(id) : '';
-                const img = new Image();
-                img.loading = 'lazy';
-                img.decoding = 'async';
-                img.alt = '';
-                img.src = thumb || '';
-                btn.appendChild(img);
-                const badge = document.createElement('span');
-                badge.className = 'media-badge';
-                badge.textContent = 'YouTube';
-                btn.appendChild(badge);
-            } else if (isVideoSrc(src)) {
+            if (isVideoSrc(src)) {
                 createVideoThumb(src).then(dataUrl => {
                     const img = new Image();
                     img.loading = 'lazy';
@@ -259,4 +182,4 @@ nav.addEventListener('click', e => {
         nav.classList.remove('active');
         hamburger.setAttribute('aria-expanded', 'false');
     }
-});  
+});
