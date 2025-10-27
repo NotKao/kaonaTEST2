@@ -1,0 +1,6 @@
+-- LocalScript to kick the local player
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Kick the local player with a custom message
+LocalPlayer:Kick("You have been banned from the game.")
